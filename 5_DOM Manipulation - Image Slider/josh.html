@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galaxy Themed Image Slider</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        @keyframes twinkling {
+            0% { opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { opacity: 0.3; }
+        }
+        
+        @keyframes floatUp {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0); }
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(45deg, #0f0c29, #302b63, #24243e);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Galaxy stars */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 4px),
+                radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 3px),
+                radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 4px);
+            background-size: 550px 550px, 350px 350px, 250px 250px;
+            background-position: 0 0, 40px 60px, 130px 270px;
+            z-index: -1;
+        }
+        
+        /* Floating orbs */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            pointer-events: none;
+            z-index: -1;
+            animation: floatUp 10s ease-in-out infinite, twinkling 6s ease-in-out infinite;
+        }
+        
+        .slider-container {
+            position: relative;
+            width: 80%;
+            max-width: 800px;
+            height: 450px;
+            overflow: visible;
+            perspective: 1200px;
+            margin-top: 50px;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+        
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 20px;
+            overflow: hidden;
+            transform: rotateY(180deg) scale(0.85);
+            opacity: 0;
+            transition: all 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        }
+        
+        .slide.active {
+            transform: rotateY(0) scale(1);
+            opacity: 1;
+            z-index: 10;
+        }
+        
+        .slide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.6));
+            z-index: 1;
+        }
+        
+        .slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .slide:hover img {
+            transform: scale(1.05);
+        }
+        
+        .nav-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+            color: white;
+            border: none;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            z-index: 20;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .nav-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.5);
+        }
+        
+        .prev {
+            left: -30px;
+        }
+        
+        .next {
+            right: -30px;
+        }
+        
+        .indicators {
+            position: absolute;
+            bottom: -40px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            z-index: 20;
+        }
+        
+        .indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+        
+        .indicator:hover {
+            transform: scale(1.2);
+        }
+        
+        .indicator.active {
+            background: white;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+            transform: scale(1.2);
+        }
+        
+        /* Slide title */
+        .slide-content {
+            position: absolute;
+            bottom: 40px;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            text-align: center;
+            color: white;
+            z-index: 2;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.5s ease 0.3s;
+        }
+        
+        .slide.active .slide-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .slide-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+        }
+        
+        .slide-desc {
+            font-size: 16px;
+            max-width: 80%;
+            margin: 0 auto;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="slider-container">
+        <div class="slider">
+            <!-- Slides will be added dynamically with JavaScript -->
+        </div>
+        <button class="nav-button prev">❮</button>
+        <button class="nav-button next">❯</button>
+        <div class="indicators">
+            <!-- Indicators will be added dynamically -->
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Array of image data with titles and descriptions
+            const imageData = [
+                {
+                    url: 'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExcHpncjFjNzk0eXJpbXVmaDd6MWh4bnZ6bDA2eGRkbHdycW1maTNrcCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/RbDKaczqWovIugyJmW/giphy.gif',
+                    title: 'HR: Why should we hire you?',
+                    desc: 'Me: Because I already told my mom I got the job and she is really proud of me'
+                },
+                {
+                    url: 'https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExcXU4bnZuN202Zzdndnk4anFya2trcXBscHM4cDlnYnpmMGR3aHV4dyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/ekjmhJUGHJm7FC4Juo/giphy.gif',
+                    title: '',
+                    desc: 'Had an proficient skills in Coding '
+                },
+                {
+                    url: 'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExbG8wZWkwcmNhenE4ZTF5b3V4d2E2ZWw4aThlZGQ4Y2EycTRmZm93bSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/gQm37vKLwkUVjOvVmp/giphy.gif',
+                    title: '',
+                    desc: ''
+                },
+                {
+                    url: 'https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExbWg4OWY0bzB1YThlanBtZ3ZhZHM4amF3czRudzM0anFxNzc2aDVxZiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/h5cU1MEp9k0m1htNQs/giphy.gif',
+                    title: '',
+                    desc: 'HR replies'
+                },
+                {
+                    url: 'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExZGQ5cXBkaWg1Nm50aG0yMHBib3d2NnpqOWhzMzkxazV0aWNmaDBocSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l2SpUoAPo0CBOkyxq/giphy.gif',
+                    title: 'Thank YOU So Much',
+                    desc: ''
+                }
+            ];
+            
+            let currentIndex = 0;
+            const sliderContainer = document.querySelector('.slider');
+            const indicatorsContainer = document.querySelector('.indicators');
+            
+            // Create random floating orbs for galaxy effect
+            for (let i = 0; i < 12; i++) {
+                const orb = document.createElement('div');
+                orb.classList.add('orb');
+                
+                // Random size between 20px and 80px
+                const size = Math.random() * 60 + 20;
+                orb.style.width = `${size}px`;
+                orb.style.height = `${size}px`;
+                
+                // Random position
+                orb.style.left = `${Math.random() * 100}%`;
+                orb.style.top = `${Math.random() * 100}%`;
+                
+                // Random animation delay
+                orb.style.animationDelay = `${Math.random() * 5}s`;
+                
+                document.body.appendChild(orb);
+            }
+            
+            // Create slides and indicators
+            imageData.forEach((image, index) => {
+                // Create slide
+                const slide = document.createElement('div');
+                slide.classList.add('slide');
+                if (index === 0) slide.classList.add('active');
+                
+                const img = document.createElement('img');
+                img.src = image.url;
+                img.alt = image.title;
+                
+                const content = document.createElement('div');
+                content.classList.add('slide-content');
+                
+                const title = document.createElement('h2');
+                title.classList.add('slide-title');
+                title.textContent = image.title;
+                
+                const desc = document.createElement('p');
+                desc.classList.add('slide-desc');
+                desc.textContent = image.desc;
+                
+                content.appendChild(title);
+                content.appendChild(desc);
+                
+                slide.appendChild(img);
+                slide.appendChild(content);
+                sliderContainer.appendChild(slide);
+                
+                // Create indicator
+                const indicator = document.createElement('div');
+                indicator.classList.add('indicator');
+                if (index === 0) indicator.classList.add('active');
+                indicator.dataset.index = index;
+                
+                indicatorsContainer.appendChild(indicator);
+            });
+            
+            // Get DOM elements
+            const slides = document.querySelectorAll('.slide');
+            const prevBtn = document.querySelector('.prev');
+            const nextBtn = document.querySelector('.next');
+            const indicators = document.querySelectorAll('.indicator');
+            
+            // Function to apply dollhouse effect
+            function applyDollEffect(slide, direction) {
+                // Reset all slides
+                slides.forEach(s => {
+                    if (s !== slide) {
+                        s.style.transform = 'rotateY(180deg) scale(0.85)';
+                        s.style.opacity = '0';
+                        s.classList.remove('active');
+                    }
+                });
+                
+                // Apply doll effect to active slide
+                slide.style.transform = 'rotateY(0) scale(1)';
+                slide.style.opacity = '1';
+                slide.classList.add('active');
+                
+                // Apply effect to slider container for 3D rotation feel
+                sliderContainer.style.transform = direction > 0 ? 
+                    'translateZ(50px) rotateY(5deg)' : 'translateZ(50px) rotateY(-5deg)';
+                
+                // Reset container after animation
+                setTimeout(() => {
+                    sliderContainer.style.transform = 'translateZ(0) rotateY(0)';
+                }, 800);
+            }
+            
+            // Function to go to a specific slide
+            function goToSlide(index, direction = 1) {
+                // Handle wrapping
+                if (index < 0) index = slides.length - 1;
+                if (index >= slides.length) index = 0;
+                
+                // Remove active class from current indicator
+                document.querySelector('.indicator.active').classList.remove('active');
+                
+                // Add active class to new indicator
+                indicators[index].classList.add('active');
+                
+                // Apply doll effect transition
+                applyDollEffect(slides[index], direction);
+                
+                currentIndex = index;
+            }
+            
+            // Event listeners for buttons
+            prevBtn.addEventListener('click', () => {
+                goToSlide(currentIndex - 1, -1);
+            });
+            
+            nextBtn.addEventListener('click', () => {
+                goToSlide(currentIndex + 1, 1);
+            });
+            
+            // Event listeners for indicators
+            indicators.forEach(indicator => {
+                indicator.addEventListener('click', () => {
+                    const newIndex = parseInt(indicator.dataset.index);
+                    const direction = newIndex > currentIndex ? 1 : -1;
+                    goToSlide(newIndex, direction);
+                });
+            });
+            
+            // Auto play with loop
+            let interval = setInterval(() => {
+                goToSlide(currentIndex + 1, 1);
+            }, 5000);
+            
+            // Pause auto play on hover
+            sliderContainer.addEventListener('mouseenter', () => {
+                clearInterval(interval);
+            });
+            
+            sliderContainer.addEventListener('mouseleave', () => {
+                interval = setInterval(() => {
+                    goToSlide(currentIndex + 1, 1);
+                }, 5000);
+            });
+            
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft') {
+                    goToSlide(currentIndex - 1, -1);
+                } else if (e.key === 'ArrowRight') {
+                    goToSlide(currentIndex + 1, 1);
+                }
+            });
+            
+            // Add mouse movement parallax effect
+            document.addEventListener('mousemove', (e) => {
+                const xAxis = (window.innerWidth / 2 - e.pageX) / 50;
+                const yAxis = (window.innerHeight / 2 - e.pageY) / 50;
+                
+                // Apply subtle parallax to active slide
+                const activeSlide = document.querySelector('.slide.active img');
+                if (activeSlide) {
+                    activeSlide.style.transform = `scale(1.05) translate(${xAxis}px, ${yAxis}px)`;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
