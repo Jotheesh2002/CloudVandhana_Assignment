@@ -1,4 +1,4 @@
-# CloudVandhana Associate Software Engineer Internship Assignment  
+# CloudVandana Associate Software Engineer Internship Assignment  
 
 ## 📌 Overview  
 This repository contains solutions to the CloudVandhana Associate Software Engineer Internship assignment. The tasks involve **front-end development, Java programming, object-oriented programming, and DOM manipulation**.  
